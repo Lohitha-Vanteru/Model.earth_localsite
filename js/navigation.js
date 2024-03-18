@@ -2778,6 +2778,11 @@ function showTabulatorList(element, attempts) {
         		    paginationSize:10000,
         		    columns:columnArray,
         		    selectable:true,
+                    movableRows:true,
+                    rowMoved: function(row) {
+                        console.log("Rows Moved")
+                        updateMapColors();
+                    }
         		});
 
         		geotable.on("rowSelected", function(row){
@@ -2801,7 +2806,9 @@ function showTabulatorList(element, attempts) {
             			goHash({'geo':hash.geo});
                     }
         		})
-                consoleLog("Tabulator list displayed. State: " + theState);
+                consoleLog("Before Update Map Colors Tabulator list displayed. State: " + theState);
+
+                updateMapColors();
             }); // End wait for element #tabulator-geotable
         }
 		//geotable.selectRow(geotable.getRows().filter(row => row.getData().name == 'Fulton County, GA'));
@@ -2864,6 +2871,21 @@ function updateSelectedTableRows(geo, clear, attempts) {
           }
     	}
     }
+}
+
+function updateMapColors() {
+    console.log("Update Map colors")
+    let hash = getHash();
+    let layerName = hash.state.split(",")[0].toUpperCase() + " Counties";
+    var sortedData = geotable.getData("active").map(function(row) {
+        return row.location;
+    });
+    geoOverlays[layerName].eachLayer(function(layer) {
+        var location = layer.feature.properties.COUNTYFP; // Assuming 'name' property in GeoJSON
+        var index = sortedData.indexOf(location);
+        var colorIntensity = index >= 0 ? (index / sortedData.length) * 360 : 0; // Adjust color intensity based on position
+        layer.setStyle({ fillColor: "hsl(" + colorIntensity + ", 100%, 50%)" });
+    });
 }
 
 // To remove, or use as fallback
